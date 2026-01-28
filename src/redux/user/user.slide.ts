@@ -27,6 +27,13 @@ const initialState: UserState = {
     isDeleteSuccess: false,
 };
 
+export const logingInPending = createAction<{
+    email: string;
+    password: string;
+}>("logingInPending");
+
+export const logout = createAction("logout");
+
 export const fetchUserPending = createAction("fetchUserPending");
 export const fetchUserSuccess = createAction<IUser[]>("fetchUserSuccess");
 export const fetchUserFailed = createAction("fetchUserFailed");
