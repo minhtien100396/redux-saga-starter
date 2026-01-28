@@ -1,24 +1,39 @@
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import FloatingLabel from 'react-bootstrap/FloatingLabel';
-import Form from 'react-bootstrap/Form';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import Button from "react-bootstrap/Button";
+import Spinner from "react-bootstrap/esm/Spinner";
+import FloatingLabel from "react-bootstrap/FloatingLabel";
+import Form from "react-bootstrap/Form";
+import Modal from "react-bootstrap/Modal";
+import { toast } from "react-toastify";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { editUserPending } from "../../redux/user/user.slide";
 
 const UserEditModal = (props: any) => {
-    const { isOpenUpdateModal, setIsOpenUpdateModal, dataUser } = props;
+    const { isOpenUpdateModal, setIsOpenUpdateModal, dataUser, setDataUser } =
+        props;
     const [id, setId] = useState();
 
     const [email, setEmail] = useState<string>("");
     const [name, setName] = useState<string>("");
 
+    const dispatch = useAppDispatch();
+    const isEditing = useAppSelector((state) => state.user.isEditing);
+    const isEditSuccess = useAppSelector((state) => state.user.isEditSuccess);
+
     useEffect(() => {
         if (dataUser?.id) {
             setId(dataUser?.id);
             setEmail(dataUser?.email);
-            setName(dataUser?.name)
+            setName(dataUser?.name);
         }
-    }, [dataUser])
+    }, [dataUser]);
 
+    useEffect(() => {
+        if (isEditSuccess) {
+            handleCloseModal();
+            toast.success("Edit User Successfully");
+        }
+    }, [isEditSuccess]);
 
     const handleSubmit = () => {
         if (!email) {
@@ -29,8 +44,22 @@ const UserEditModal = (props: any) => {
             alert("name empty");
             return;
         }
-        console.log({ email, name, id })
-    }
+        dispatch(
+            editUserPending({
+                id: id,
+                name,
+                email,
+            }),
+        );
+    };
+
+    const handleCloseModal = () => {
+        setIsOpenUpdateModal(false);
+        setEmail("");
+        setName("");
+        setId(undefined);
+        setDataUser(null);
+    };
 
     return (
         <>
@@ -39,18 +68,20 @@ const UserEditModal = (props: any) => {
                 size="lg"
                 aria-labelledby="contained-modal-title-vcenter"
                 backdrop={false}
-                onHide={() => setIsOpenUpdateModal(false)}
+                onHide={() => handleCloseModal()}
             >
-                <Modal.Header closeButton>
-                    <Modal.Title>
-                        Update A User
-                    </Modal.Title>
-                </Modal.Header>
+                {isEditing === false ? (
+                    <Modal.Header closeButton>
+                        <Modal.Title>Update A User</Modal.Title>
+                    </Modal.Header>
+                ) : (
+                    <Modal.Header closeButton={false}>
+                        <Modal.Title>Update A User</Modal.Title>
+                    </Modal.Header>
+                )}
+
                 <Modal.Body>
-                    <FloatingLabel
-                        label="Email"
-                        className="mb-3"
-                    >
+                    <FloatingLabel label="Email" className="mb-3">
                         <Form.Control
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -66,14 +97,33 @@ const UserEditModal = (props: any) => {
                     </FloatingLabel>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button
-                        variant='warning'
-                        onClick={() => setIsOpenUpdateModal(false)} className='mr-2'>Cancel</Button>
-                    <Button onClick={() => handleSubmit()}>Confirm</Button>
+                    {isEditing === false ? (
+                        <>
+                            <Button
+                                variant="warning"
+                                onClick={() => handleCloseModal()}
+                                className="mr-2"
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={() => handleSubmit()}>Edit</Button>
+                        </>
+                    ) : (
+                        <Button variant="primary" disabled>
+                            <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                            &nbsp; Editting...
+                        </Button>
+                    )}
                 </Modal.Footer>
             </Modal>
         </>
-    )
-}
+    );
+};
 
 export default UserEditModal;

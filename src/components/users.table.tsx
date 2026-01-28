@@ -1,13 +1,15 @@
-import Table from 'react-bootstrap/Table';
-import { useState, useEffect } from 'react';
-import Button from 'react-bootstrap/Button';
-import UserCreateModal from './modal/user.create.modal';
-import UserEditModal from './modal/user.edit.modal';
-import UserDeleteModal from './modal/user.delete.modal';
-
+import { useEffect, useState } from "react";
+import Button from "react-bootstrap/Button";
+import Table from "react-bootstrap/Table";
+import { useDispatch } from "react-redux";
+import { useAppSelector } from "../redux/hooks";
+import { fetchUserPending } from "../redux/user/user.slide";
+import { IUser } from "../type/backend";
+import UserCreateModal from "./modal/user.create.modal";
+import UserDeleteModal from "./modal/user.delete.modal";
+import UserEditModal from "./modal/user.edit.modal";
 
 function UsersTable() {
-
     const [isOpenCreateModal, setIsOpenCreateModal] = useState<boolean>(false);
 
     const [isOpenUpdateModal, setIsOpenUpdateModal] = useState<boolean>(false);
@@ -15,41 +17,41 @@ function UsersTable() {
 
     const [isOpenDeleteModal, setIsOpenDeleteModal] = useState<boolean>(false);
 
-    const users = [
-        {
-            "id": 1,
-            "name": "Eric",
-            "email": "eric@gmail.com"
-        },
-        {
-            "id": 2,
-            "name": "Hỏi Dân IT",
-            "email": "hoidanit@gmail.com"
-        },
-        {
-            "id": 3,
-            "name": "Hỏi Dân IT",
-            "email": "admin@gmail.com"
-        }
-    ]
+    const users = useAppSelector((state) => state.user.users);
+
+    const dispatch = useDispatch();
+    const isPending = useAppSelector((state) => state.user.isPending);
+
+    useEffect(() => {
+        dispatch(fetchUserPending());
+    }, []);
 
     const handleEditUser = (user: any) => {
         setDataUser(user);
         setIsOpenUpdateModal(true);
-    }
+    };
 
     const handleDelete = (user: any) => {
         setDataUser(user);
         setIsOpenDeleteModal(true);
-    }
+    };
 
     return (
         <>
-            <div style={{ display: "flex", justifyContent: "space-between", margin: "15px 0" }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    margin: "15px 0",
+                }}
+            >
                 <h4>Table Users</h4>
-                <Button variant="primary"
+                <Button
+                    variant="primary"
                     onClick={() => setIsOpenCreateModal(true)}
-                >Add New</Button>
+                >
+                    Add New
+                </Button>
             </div>
             <Table striped bordered hover>
                 <thead>
@@ -61,29 +63,39 @@ function UsersTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {users?.map(user => {
-                        return (
-                            <tr key={user.id}>
-                                <td>{user.id}</td>
-                                <td>{user.name}</td>
-                                <td>{user.email}</td>
-                                <td>
-                                    <Button
-                                        variant="warning"
-                                        onClick={() => handleEditUser(user)}
-                                    >
-                                        Edit
-                                    </Button>&nbsp;&nbsp;&nbsp;
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => handleDelete(user)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </td>
-                            </tr>
-                        )
-                    })}
+                    {isPending === false &&
+                        users?.map((user: IUser) => {
+                            return (
+                                <tr key={user.id}>
+                                    <td>{user.id}</td>
+                                    <td>{user.name}</td>
+                                    <td>{user.email}</td>
+                                    <td>
+                                        <Button
+                                            variant="warning"
+                                            onClick={() => handleEditUser(user)}
+                                        >
+                                            Edit
+                                        </Button>
+                                        &nbsp;&nbsp;&nbsp;
+                                        <Button
+                                            variant="danger"
+                                            onClick={() => handleDelete(user)}
+                                        >
+                                            Delete
+                                        </Button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+
+                    {isPending === true && (
+                        <tr>
+                            <td colSpan={4} style={{ textAlign: "center" }}>
+                                Loading data...
+                            </td>
+                        </tr>
+                    )}
                 </tbody>
             </Table>
 
@@ -96,6 +108,7 @@ function UsersTable() {
                 isOpenUpdateModal={isOpenUpdateModal}
                 setIsOpenUpdateModal={setIsOpenUpdateModal}
                 dataUser={dataUser}
+                setDataUser={setDataUser}
             />
 
             <UserDeleteModal
